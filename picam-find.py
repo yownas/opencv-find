@@ -81,7 +81,7 @@ def my_drawMatches(img1, kp1, kp2, matches, text):
 		cv2.putText(img1, text, (int(avg_x)+27,int(avg_y)-20), font, 1, (0, 0, 0), 4)
 		cv2.putText(img1, text, (int(avg_x)+27,int(avg_y)-20), font, 1, (0, 255, 255), 2)
 
-		dist_txt = "Min: " + str(min_dist) + " Max: " + str(max_dist) + " Avg: " + str(avg_dist)
+		dist_txt = "Min: " + str(int(min_dist)) + " Max: " + str(int(max_dist)) + " Avg: " + str(int(avg_dist))
 		cv2.putText(img1, dist_txt, (int(avg_x)+27,int(avg_y)), font, 0.5, (0, 0, 0), 4)
 		cv2.putText(img1, dist_txt, (int(avg_x)+27,int(avg_y)), font, 0.5, (0, 255, 255), 2)
 
