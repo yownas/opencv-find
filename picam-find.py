@@ -5,12 +5,18 @@ import time
 import picamera.array
 import picamera
 
+varOkDistance = 35
+varOkPoints = 12
+
 ### Functions
 
 def my_drawMatches(img1, kp1, kp2, matches, text):
 	count  = 0
 	avg_x = 0
 	avg_y = 0
+	avg_dist = 0
+	max_dist = 0
+	min_dist = 100
 	show_target = True
 	for mat in matches:
 		# Get the matching keypoints for each of the images
@@ -29,16 +35,31 @@ def my_drawMatches(img1, kp1, kp2, matches, text):
 		cv2.circle(img1, (int(x2),int(y2)), 4, (255, 0, 0), 1)
 
 		# Don't draw target if any of the point are "bad"
-		if mat.distance > 50:
+		if mat.distance > varOkDistance:
 			show_target = False
+		avg_dist+=mat.distance
+		if mat.distance > max_dist:
+			max_dist = mat.distance
+		if mat.distance < min_dist:
+			min_dist = mat.distance
+		cv2.circle(img1, (int(count) * 10,int(mat.distance) * 3), 2, (0, 255, 0), 1)
+
+	cv2.line(img1, (0, int(varOkDistance * 3)), (200, int(varOkDistance * 3)), (0, 255, 0), 1)
+	cv2.line(img1, (0, int(50 * 3)), (200, int(50 * 3)), (255, 255, 0), 1)
+	cv2.line(img1, (0, int(100 * 3)), (200, int(100 * 3)), (0, 0, 255), 1)
 
 	if show_target:
 		avg_x = avg_x / count
 		avg_y = avg_y / count
+		avg_dist = avg_dist / count
 		cv2.circle(img1, (int(avg_x),int(avg_y)), 30, (0, 0, 255), 7)
 		font = cv2.FONT_HERSHEY_SIMPLEX
 		cv2.putText(img1, text, (int(avg_x)+27,int(avg_y)-20), font, 1, (0, 0, 0), 4)
 		cv2.putText(img1, text, (int(avg_x)+27,int(avg_y)-20), font, 1, (0, 255, 255), 2)
+
+		dist_txt = "Min: " + str(min_dist) + " Max: " + str(max_dist) + " Avg: " + str(avg_dist)
+		cv2.putText(img1, dist_txt, (int(avg_x)+27,int(avg_y)), font, 0.5, (0, 0, 0), 4)
+		cv2.putText(img1, dist_txt, (int(avg_x)+27,int(avg_y)), font, 0.5, (0, 255, 255), 2)
 
 	return img1
 	#end of my_drawMatches()
@@ -86,11 +107,11 @@ while True:
 
 	matches = bf.match(des1,des0)
 	matches = sorted(matches, key = lambda x:x.distance)
-	img_rgb = my_drawMatches(img_rgb,kp1,kp0,matches[:12],find_name[1])
+	img_rgb = my_drawMatches(img_rgb,kp1,kp0,matches[:varOkPoints],find_name[1])
 
 	matches = bf.match(des2,des0)
 	matches = sorted(matches, key = lambda x:x.distance)
-	img_rgb = my_drawMatches(img_rgb,kp2,kp0,matches[:12],find_name[2])
+	img_rgb = my_drawMatches(img_rgb,kp2,kp0,matches[:varOkPoints],find_name[2])
 
 	cv2.imshow('Find all the things', img_rgb)
 
@@ -99,5 +120,5 @@ while True:
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 		break
 
-video_capture.release()
+#video_capture.release()
 cv2.destroyAllWindows()
