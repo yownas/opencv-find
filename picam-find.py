@@ -4,9 +4,18 @@ import sys
 import time
 import picamera.array
 import picamera
+import os
+import re
 
+# Sane(?) values to see if a match is ok or not.
+# "Works for me."
 varOkDistance = 35
 varOkPoints = 12
+
+# Folder with items to search for
+# ~300x~300 seems to work ok.
+# Don't add too many. :)
+pictureDir = "pictures"
 
 ### Functions
 
@@ -44,16 +53,18 @@ def my_drawMatches(img1, kp1, kp2, matches, text):
 			min_dist = mat.distance
 		cv2.circle(img1, (int(count) * 10,int(mat.distance) * 3), 2, (0, 255, 0), 1)
 
+	font = cv2.FONT_HERSHEY_SIMPLEX
 	cv2.line(img1, (0, int(varOkDistance * 3)), (200, int(varOkDistance * 3)), (0, 255, 0), 1)
+	cv2.putText(img1, str(varOkPoints) + "@" + str(varOkDistance),
+		(203,int(varOkDistance * 3) + 3), font, 0.4, (0, 255, 0), 1)
 	cv2.line(img1, (0, int(50 * 3)), (200, int(50 * 3)), (255, 255, 0), 1)
 	cv2.line(img1, (0, int(100 * 3)), (200, int(100 * 3)), (0, 0, 255), 1)
 
-	if show_target:
+	if show_target and count > 0:
 		avg_x = avg_x / count
 		avg_y = avg_y / count
 		avg_dist = avg_dist / count
 		cv2.circle(img1, (int(avg_x),int(avg_y)), 30, (0, 0, 255), 7)
-		font = cv2.FONT_HERSHEY_SIMPLEX
 		cv2.putText(img1, text, (int(avg_x)+27,int(avg_y)-20), font, 1, (0, 0, 0), 4)
 		cv2.putText(img1, text, (int(avg_x)+27,int(avg_y)-20), font, 1, (0, 255, 255), 2)
 
@@ -66,8 +77,6 @@ def my_drawMatches(img1, kp1, kp2, matches, text):
 
 ### Main
 
-#video_capture = cv2.VideoCapture(0)
-
 camera = picamera.PiCamera()
 camera.resolution = (640, 480)
 camera.rotation = 180
@@ -77,20 +86,19 @@ video_capture = picamera.array.PiRGBArray(camera, size=(640, 480))
 orb = cv2.ORB()
 
 find_name = {}
+img = {}
+kp = {}
+des = {}
+find_count = 0
 
-if len(sys.argv) > 1:
-	find_name[1]=sys.argv[1]
-else:
-	find_name[1]='pibox.png'
-img1 = cv2.imread(find_name[1], 0)
-kp1, des1 = orb.detectAndCompute(img1,None)
-
-if len(sys.argv) > 2:
-	find_name[2]=sys.argv[2]
-else:
-	find_name[2]='spam.jpg'
-img2 = cv2.imread(find_name[2], 0)
-kp2, des2 = orb.detectAndCompute(img2,None)
+for f in os.listdir(pictureDir): 
+	fileName = os.path.join(pictureDir, f)
+	if os.path.isfile(fileName):
+		print "Add file: " + f
+		img[find_count] = cv2.imread(fileName, 0)
+		kp[find_count], des[find_count] = orb.detectAndCompute(img[find_count],None)
+		find_name[find_count] = re.sub('\..*$', '', f)
+		find_count+=1
 
 # Warmup
 time.sleep(0.5)
@@ -105,20 +113,32 @@ while True:
 	kp0, des0 = orb.detectAndCompute(img_gray,None)
 	bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-	matches = bf.match(des1,des0)
-	matches = sorted(matches, key = lambda x:x.distance)
-	img_rgb = my_drawMatches(img_rgb,kp1,kp0,matches[:varOkPoints],find_name[1])
-
-	matches = bf.match(des2,des0)
-	matches = sorted(matches, key = lambda x:x.distance)
-	img_rgb = my_drawMatches(img_rgb,kp2,kp0,matches[:varOkPoints],find_name[2])
+	for i in range(len(find_name)):
+		matches = bf.match(des[i],des0)
+		matches = sorted(matches, key = lambda x:x.distance)
+		img_rgb = my_drawMatches(img_rgb,kp[i],kp0,matches[:varOkPoints],find_name[i])
 
 	cv2.imshow('Find all the things', img_rgb)
 
 	video_capture.truncate(0)
 
-	if cv2.waitKey(1) & 0xFF == ord('q'):
-		break
+#	if cv2.waitKey(1) & 0xFF == ord('q'):
+#		break
+
+	key = cv2.waitKey(1)
+	if key != -1:
+		if key == ord('q'):
+			break
+		elif key == 65361:	# Left
+			varOkPoints -= 1
+		elif key == 65362:	# Up
+			varOkDistance -= 1
+		elif key == 65363:	# Right
+			varOkPoints += 1
+		elif key == 65364:	# Down
+			varOkDistance += 1
+		else:	
+			print "Key: " + str(key)
 
 #video_capture.release()
 cv2.destroyAllWindows()
