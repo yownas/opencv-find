@@ -20,6 +20,10 @@ pictureDir = "pictures"
 ### Functions
 
 def my_drawMatches(img1, kp1, kp2, matches, text):
+	gx0 = 0
+	gx1 = 0
+	gy0 = 0
+	gy1 = 0
 	count  = 0
 	avg_x = 0
 	avg_y = 0
@@ -40,7 +44,7 @@ def my_drawMatches(img1, kp1, kp2, matches, text):
 		avg_x+=x2
 		avg_y+=y2
 
-		# Draw a small circle
+		# Draw a small circle 
 		cv2.circle(img1, (int(x2),int(y2)), 4, (255, 0, 0), 1)
 
 		# Don't draw target if any of the point are "bad"
@@ -51,13 +55,22 @@ def my_drawMatches(img1, kp1, kp2, matches, text):
 			max_dist = mat.distance
 		if mat.distance < min_dist:
 			min_dist = mat.distance
+
+		gx1 = int(count) * 10
+		gy1 = int(mat.distance) * 3
+		if gx0 != 0 and gy0 != 0:
+			cv2.line(img1, (gx0, gy0), (gx1, gy1), (0, 255, 0), 1)
+		gx0 = gx1
+		gy0 = gy1
 		cv2.circle(img1, (int(count) * 10,int(mat.distance) * 3), 2, (0, 255, 0), 1)
 
 	font = cv2.FONT_HERSHEY_SIMPLEX
 	cv2.line(img1, (0, int(varOkDistance * 3)), (200, int(varOkDistance * 3)), (0, 255, 0), 1)
 	cv2.putText(img1, str(varOkPoints) + "@" + str(varOkDistance),
 		(203,int(varOkDistance * 3) + 3), font, 0.4, (0, 255, 0), 1)
-	cv2.line(img1, (0, int(50 * 3)), (200, int(50 * 3)), (255, 255, 0), 1)
+	cv2.line(img1, (0, int(25 * 3)), (25, int(25 * 3)), (0, 0, 255), 1)
+	cv2.line(img1, (0, int(50 * 3)), (50, int(50 * 3)), (0, 0, 255), 1)
+	cv2.line(img1, (0, int(75 * 3)), (25, int(75 * 3)), (0, 0, 255), 1)
 	cv2.line(img1, (0, int(100 * 3)), (200, int(100 * 3)), (0, 0, 255), 1)
 
 	if show_target and count > 0:
