@@ -62,7 +62,7 @@ def my_drawMatches(img1, kp1, kp2, matches, text):
 			cv2.line(img1, (gx0, gy0), (gx1, gy1), (0, 255, 0), 1)
 		gx0 = gx1
 		gy0 = gy1
-		cv2.circle(img1, (int(count) * 10,int(mat.distance) * 3), 2, (0, 255, 0), 1)
+		#cv2.circle(img1, (int(count) * 10,int(mat.distance) * 3), 2, (0, 255, 0), 1)
 
 	font = cv2.FONT_HERSHEY_SIMPLEX
 	cv2.line(img1, (0, int(varOkDistance * 3)), (200, int(varOkDistance * 3)), (0, 255, 0), 1)
@@ -113,6 +113,8 @@ for f in os.listdir(pictureDir):
 		find_name[find_count] = re.sub('\..*$', '', f)
 		find_count+=1
 
+print "Learned: " + str(find_count)
+
 # Warmup
 time.sleep(0.5)
 
@@ -126,7 +128,8 @@ while True:
 	kp0, des0 = orb.detectAndCompute(img_gray,None)
 	bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-	for i in range(len(find_name)):
+	#for i in range(len(find_name)):
+	for i in range(find_count):
 		matches = bf.match(des[i],des0)
 		matches = sorted(matches, key = lambda x:x.distance)
 		img_rgb = my_drawMatches(img_rgb,kp[i],kp0,matches[:varOkPoints],find_name[i])
